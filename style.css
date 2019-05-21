@@ -1,0 +1,43 @@
+/* 
+Supported CSS properties:
+https://developer.gnome.org/gtk3/stable/chap-css-properties.html
+*/
+
+/* Base style applied to all labels */
+.lbl {
+  color: #EEE;
+  font-size: 14px;
+  padding: 2px;
+  /*text-shadow: 0 0 8px #000, 0 0 4px #000, 1px 1px 3px #000;*/
+  text-shadow: 0 0 2px #000;
+}
+
+/* Current time */
+.time-lbl {
+  font-size: 36px;
+  padding-top: 20px; /* Make room for top Ubuntu taskbar */
+}
+
+/* Current date */
+.date-lbl {
+  font-size: 26px;
+  padding-right: 15px;
+}
+
+/* Date section header */
+.date-header-lbl {
+  font-size: 18px;
+  padding-top: 5px;
+  padding-right: 15px;
+}
+
+/* Event times */
+.event-time-lbl {
+  padding-left: 10px;
+}
+
+/* Event titles */
+.event-title-lbl {
+  padding-left: 10px;
+  padding-right: 15px;
+}
