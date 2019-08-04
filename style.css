@@ -8,8 +8,7 @@ https://developer.gnome.org/gtk3/stable/chap-css-properties.html
   color: #EEE;
   font-size: 14px;
   padding: 2px;
-  /*text-shadow: 0 0 8px #000, 0 0 4px #000, 1px 1px 3px #000;*/
-  text-shadow: 0 0 2px #000;
+  text-shadow: 1px 1px 1px #000, 0 0 3px #000;
 }
 
 /* Current time */
