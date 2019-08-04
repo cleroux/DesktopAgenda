@@ -39,7 +39,12 @@ class GoogleCalendar():
                 pickle.dump(creds, token)
 
         self._service = build("calendar", "v3", credentials=creds)
-        self._colors = self._service.colors().get().execute()
+        self._colors = {}
+        try:
+            self._colors = self._service.colors().get().execute()
+        except:
+            print "Failed to load calendar colors from Calendar API"
+
         self._events = []
 
     def load_events(self, date_handler=None, event_handler=None, days=7, max_results=30):
@@ -51,10 +56,15 @@ class GoogleCalendar():
         queryStart = now.isoformat() + "Z"
         queryEnd = (now + timedelta(hours=days*24)).isoformat() + "Z"
 
+        calendars = []
+        try:
+            #calendars_result = self._service.calendarList().list(minAccessRole="owner").execute()
+            calendars_result = self._service.calendarList().list().execute()
+            calendars = calendars_result.get("items", [])
+        except:
+            print "Failed to load calendars from Calendar API"
+
         shown_events = []
-        #calendars_result = self._service.calendarList().list(minAccessRole="owner").execute()
-        calendars_result = self._service.calendarList().list().execute()
-        calendars = calendars_result.get("items", [])
         for cal in calendars:
             calId = cal["id"]
             selected = cal.get("selected", False)
@@ -62,18 +72,23 @@ class GoogleCalendar():
                 continue
 
             color_id = cal["colorId"]
-            color = self._colors["calendar"][color_id]["background"]
+            color = self._colors.get("calendar", {"calendar":{}}).get(color_id, {"background":None})["background"]
 
-            events_result = self._service.events().list(calendarId=calId,
-                timeMin=queryStart, timeMax=queryEnd, maxResults=max_results, singleEvents=True,
-                orderBy="startTime").execute()
-            events = events_result.get("items", [])
-            reminders = events_result.get("defaultReminders", [])
-            for event in events:
-                event["color"] = color
-                event["reminders"] = reminders
-                shown_events.append(event)
-
+            events_result = None
+            try:
+                events_result = self._service.events().list(calendarId=calId,
+                    timeMin=queryStart, timeMax=queryEnd, maxResults=max_results, singleEvents=True,
+                    orderBy="startTime").execute()
+                events = events_result.get("items", [])
+                reminders = events_result.get("defaultReminders", [])
+                for event in events:
+                    if color != None:
+                        event["color"] = color
+                    event["reminders"] = reminders
+                    shown_events.append(event)
+            except:
+                print "Failed to load events from Calendar API"
+                
         shown_events.sort(key=self.get_event_datetime)
         self._events = shown_events
 

@@ -17,6 +17,7 @@ import time
 CSS_SOURCE = "style.css"
 CLOCK_TIME_FORMAT = "%-I:%M %p"
 CLOCK_DATE_FORMAT = "%A, %B %-d, %Y"
+CLOCK_UTC_FORMAT = "%Y-%m-%d %-H:%M:%S UTC"
 TIME_LBL_FORMAT = "%-I:%M"
 
 # TODO: Use Gtk.Application / Gtk.ApplicationWindow instead.
@@ -186,18 +187,23 @@ class MainWindow(Gtk.Window):
 
         time_lbl = Gtk.Label(xalign=0)
         time_lbl.set_halign(Gtk.Align.END)
-        time_lbl.set_markup("<span foreground='{}'>{}</span>".format(event["color"], ev_time))
+        lbl_color = event.get("color", None)
+        #print lbl_color
+        if lbl_color != None:
+            time_lbl.set_markup("<span foreground='{}'>{}</span>".format(event["color"], ev_time))
         time_lbl.get_style_context().add_class("lbl")
         time_lbl.get_style_context().add_class("event-time-lbl")
         self.event_container.attach(time_lbl, 0, self.row, 1, 1)
 
         title_lbl = Gtk.Label(title, xalign=0)
-        title_lbl.set_markup("<span foreground='{}'>{}</span>".format(event["color"], title))
+        title = title.replace("&", "&amp;")
+        if lbl_color != None:
+            title_lbl.set_markup("<span foreground='{}'>{}</span>".format(event["color"], title.encode("utf-8")))
 
         # Set tooltip
-        tooltip_text = "Location: {}".format(location)
+        tooltip_text = "Location: {}".format(location.encode("utf-8"))
         if organizer is not None:
-            tooltip_text = "{}\nOrganizer: {}".format(tooltip_text, organizer)
+            tooltip_text = "{}\nOrganizer: {}".format(tooltip_text, organizer.encode("utf-8"))
         title_lbl.set_tooltip_text(tooltip_text)
 
         # Set label style
@@ -271,10 +277,13 @@ class MainWindow(Gtk.Window):
         # If API is unreachable because there is no internet connection,
         # the clock labels stop updating. This is unconfirmed hypothesis
         now = datetime.now()
+        now_utc = datetime.now(pytz.utc)
 
         time_str = now.strftime(CLOCK_TIME_FORMAT)
+        time_utc_str = now_utc.strftime(CLOCK_UTC_FORMAT)
         date_str = now.strftime(CLOCK_DATE_FORMAT)
         self.time_lbl.set_text(time_str)
+        self.time_lbl.set_tooltip_text(time_utc_str)
         self.date_lbl.set_text(date_str)
 
         return True
