@@ -2,16 +2,16 @@
 
 from datetime import datetime, timedelta
 from dateutil.parser import parse
-import gi
-gi.require_version("Gtk", "3.0")
-gi.require_version("AppIndicator3", "0.1")
-from gi.repository import Gtk, Gdk, GObject, AppIndicator3
 from google_calendar import GoogleCalendar
 import os.path
 import prefs
 import pytz
-import threading
+# import threading
 import time
+import gi
+gi.require_version("Gtk", "3.0")
+gi.require_version("AppIndicator3", "0.1")
+from gi.repository import Gtk, Gdk, GObject, AppIndicator3
 
 # TODO: Move these to MainWindow class
 CSS_SOURCE = "style.css"
@@ -20,10 +20,12 @@ CLOCK_DATE_FORMAT = "%A, %B %-d, %Y"
 CLOCK_UTC_FORMAT = "%Y-%m-%d %-H:%M:%S UTC"
 TIME_LBL_FORMAT = "%-I:%M"
 
+
 # TODO: Use Gtk.Application / Gtk.ApplicationWindow instead.
 # This can provide single instance guarantee and better menu
 # and window management.
 # https://python-gtk-3-tutorial.readthedocs.io/en/latest/application.html
+
 
 class MainWindow(Gtk.Window):
 
@@ -33,7 +35,8 @@ class MainWindow(Gtk.Window):
         self.prefs_window = prefs.PrefsWindow()
 
         # Initialize the taskbar icon
-        self.appindicator = AppIndicator3.Indicator.new("desktop-agenda", "gnome-calendar", AppIndicator3.IndicatorCategory.OTHER)
+        self.appindicator = AppIndicator3.Indicator.new("desktop-agenda", "gnome-calendar",
+                                                        AppIndicator3.IndicatorCategory.OTHER)
         self.appindicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
 
         # Create the dropdown menu for the taskbar icon
@@ -54,6 +57,10 @@ class MainWindow(Gtk.Window):
         self.appindicator.set_menu(menu)
 
         # Create an instance of the GoogleCalendar class
+        # TODO: This can raise an exception
+        #  google.auth.exceptions.RefreshError:
+        #  ('invalid_grant: Bad Request', u'{\n  "error": "invalid_grant",\n  "error_description": "Bad Request"\n}')
+        #  In this case, the token.pickle file needs to be removed
         self.calendar = GoogleCalendar()
 
         # Initialize the main window
@@ -91,18 +98,18 @@ class MainWindow(Gtk.Window):
         self.widgets_container.get_style_context().add_class("container")
         self.add(self.widgets_container)
 
-        clockContainer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.widgets_container.pack_start(clockContainer, True, True, 0)
+        clock_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.widgets_container.pack_start(clock_container, True, True, 0)
 
         self.time_lbl = Gtk.Label(xalign=0)
         self.time_lbl.get_style_context().add_class("lbl")
         self.time_lbl.get_style_context().add_class("time-lbl")
-        clockContainer.pack_start(self.time_lbl, False, False, 0)
+        clock_container.pack_start(self.time_lbl, False, False, 0)
 
         self.date_lbl = Gtk.Label(xalign=0)
         self.date_lbl.get_style_context().add_class("lbl")
         self.date_lbl.get_style_context().add_class("date-lbl")
-        clockContainer.pack_start(self.date_lbl, False, False, 0)
+        clock_container.pack_start(self.date_lbl, False, False, 0)
 
         # Update clock and calendar at startup
         self.update_clock()
@@ -113,12 +120,10 @@ class MainWindow(Gtk.Window):
         GObject.timeout_add(1000, self.update_agenda)
         GObject.timeout_add(1000, self.reminders)
 
-
     def position(self):
         screen = self.get_screen()
         window_size = self.get_size()
         self.move(screen.width() - window_size.width, 0)
-
 
     def date_handler(self, date):
         """
@@ -188,8 +193,8 @@ class MainWindow(Gtk.Window):
         time_lbl = Gtk.Label(xalign=0)
         time_lbl.set_halign(Gtk.Align.END)
         lbl_color = event.get("color", None)
-        #print lbl_color
-        if lbl_color != None:
+        # print lbl_color
+        if lbl_color is not None:
             time_lbl.set_markup("<span foreground='{}'>{}</span>".format(event["color"], ev_time))
         time_lbl.get_style_context().add_class("lbl")
         time_lbl.get_style_context().add_class("event-time-lbl")
@@ -197,7 +202,7 @@ class MainWindow(Gtk.Window):
 
         title_lbl = Gtk.Label(title, xalign=0)
         title = title.replace("&", "&amp;")
-        if lbl_color != None:
+        if lbl_color is not None:
             title_lbl.set_markup("<span foreground='{}'>{}</span>".format(event["color"], title.encode("utf-8")))
 
         # Set tooltip
@@ -229,7 +234,7 @@ class MainWindow(Gtk.Window):
 
         return True
 
-    def reminder_handler(self, event):
+    def _reminder_handler(self, event):
         """
         Checks if the given event has a notification that needs to be shown and
         creates a taskbar notification if necessary.
@@ -238,7 +243,7 @@ class MainWindow(Gtk.Window):
         """
         date = event["start"].get("dateTime", None)
         if date is None:
-            return True 
+            return True
         dt = parse(date).astimezone(pytz.utc)
         now = datetime.now(pytz.utc).replace(second=0, microsecond=0)
 
@@ -250,15 +255,14 @@ class MainWindow(Gtk.Window):
             if minutes <= 0:
                 continue
             reminder_time = dt - timedelta(minutes=minutes)
-            if reminder_time == now:  #if dt.datetime() == datetime.():
+            if reminder_time == now:
                 # TODO: Create popup notification
                 print "popup"
-                return False # Only create one popup and cancel further event handlers
+                return False  # Only create one popup and cancel further event handlers
         return True
-            
 
     def event_lbl_enter(self, widget, event):
-        pointer = Gdk.Cursor(Gdk.CursorType.HAND1) # TODO: should pointer be a class variable?
+        pointer = Gdk.Cursor(Gdk.CursorType.HAND1)  # TODO: should pointer be a class variable?
         wnd = self.get_root_window()
         wnd.set_cursor(pointer)
         self.enter_notify(widget, event)
@@ -288,7 +292,7 @@ class MainWindow(Gtk.Window):
 
         return True
 
-    def update_agenda(self, force = False):
+    def update_agenda(self, force=False):
         """
         Updates the entire adenda window
         This function should return True so the timer will continue to run.
@@ -300,7 +304,9 @@ class MainWindow(Gtk.Window):
 
         if (now.second == 0 and now.minute % 15 == 0) or force:
 
-            self.calendar.load_events(days=self.prefs_window.get_query_days(), max_results=self.prefs_window.get_query_limit()) # Synchronous API query
+            # Synchronous API query
+            self.calendar.load_events(days=self.prefs_window.get_query_days(),
+                                      max_results=self.prefs_window.get_query_limit())
 
             # Remove all event labels
             if self.event_container is not None:
@@ -319,7 +325,7 @@ class MainWindow(Gtk.Window):
     def reminders(self):
         now = datetime.now()
         if now.second == 0:
-            self.calendar.get_events(None, self.reminder_handler)
+            self.calendar.get_events(None, self._reminder_handler)
         return True
 
     def enter_notify(self, event, data):
@@ -341,7 +347,8 @@ class MainWindow(Gtk.Window):
             self.hide()
             event.set_label("Show")
         else:
-            # TODO: There is a bug here, the window does not appear in the correct location after being hidden and shown again
+            # TODO: There is a bug here, the window does not appear in the
+            #  correct location after being hidden and shown again
             self.show()
             event.set_label("Hide")
 
@@ -358,6 +365,7 @@ class MainWindow(Gtk.Window):
 
     def quit(self, event):
         Gtk.main_quit()
+
 
 if __name__ == "__main__":
     window = MainWindow()

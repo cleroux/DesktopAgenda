@@ -6,7 +6,8 @@ from google.auth.transport.requests import Request
 import os.path
 import pickle
 
-class GoogleCalendar():
+
+class GoogleCalendar:
     """
     Helper class for interacting with the Google Calendar API from the Desktop Agenda application.
     An API credentials file must be created before this application can use the API.
@@ -31,6 +32,7 @@ class GoogleCalendar():
                 creds = pickle.load(token)
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
+                # TODO: This can raise an exception if the token.pickle file is too old?
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(self.CLIENT_SECRETS_FILE, self.API_SCOPES)
@@ -53,12 +55,12 @@ class GoogleCalendar():
         Trigger handlers and return events
         """
         now = datetime.utcnow()
-        queryStart = now.isoformat() + "Z"
-        queryEnd = (now + timedelta(hours=days*24)).isoformat() + "Z"
+        query_start = now.isoformat() + "Z"
+        query_end = (now + timedelta(hours=days * 24)).isoformat() + "Z"
 
         calendars = []
         try:
-            #calendars_result = self._service.calendarList().list(minAccessRole="owner").execute()
+            # calendars_result = self._service.calendarList().list(minAccessRole="owner").execute()
             calendars_result = self._service.calendarList().list().execute()
             calendars = calendars_result.get("items", [])
         except:
@@ -72,23 +74,24 @@ class GoogleCalendar():
                 continue
 
             color_id = cal["colorId"]
-            color = self._colors.get("calendar", {"calendar":{}}).get(color_id, {"background":None})["background"]
+            color = self._colors.get("calendar", {"calendar": {}}).get(color_id, {"background": None})["background"]
 
             events_result = None
             try:
                 events_result = self._service.events().list(calendarId=calId,
-                    timeMin=queryStart, timeMax=queryEnd, maxResults=max_results, singleEvents=True,
-                    orderBy="startTime").execute()
+                                                            timeMin=query_start, timeMax=query_end,
+                                                            maxResults=max_results, singleEvents=True,
+                                                            orderBy="startTime").execute()
                 events = events_result.get("items", [])
                 reminders = events_result.get("defaultReminders", [])
                 for event in events:
-                    if color != None:
+                    if color is not None:
                         event["color"] = color
                     event["reminders"] = reminders
                     shown_events.append(event)
             except:
                 print "Failed to load events from Calendar API"
-                
+
         shown_events.sort(key=self.get_event_datetime)
         self._events = shown_events
 
@@ -106,18 +109,18 @@ class GoogleCalendar():
             event_date = self.get_event_datetime(event)
             dt = parse(event_date)
 
-            if cur_date != None:
+            if cur_date is not None:
                 cd = parse(cur_date)
 
-            if cur_date == None or dt.date() != cd.date():
+            if cur_date is None or dt.date() != cd.date():
                 cur_date = event_date
                 if date_handler is not None:
-                    if date_handler(event_date) != True: # Allow handlers to cancel further processing
+                    if not date_handler(event_date):  # Allow handlers to cancel further processing
                         print "date handler canceled processing"
                         break
 
             if event_handler is not None:
-                if event_handler(event) != True: # Allow handlers to cancel further processing
+                if not event_handler(event):  # Allow handlers to cancel further processing
                     print "event handler canceled processing"
                     break
 

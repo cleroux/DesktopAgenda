@@ -1,15 +1,17 @@
+import json
+import os.path
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-import json
-import os.path
 
-'''
+"""
 TODO:
-Add "Load on startup" checkbox option. Needs to create ~/.config/autostart/desktop-agenda.desktop link to /usr/share/applications/desktop-agenda.desktop
+Add "Load on startup" checkbox option.
+Needs to create ~/.config/autostart/desktop-agenda.desktop link to /usr/share/applications/desktop-agenda.desktop
 
 On Apply, update app to reflect new preferences
-'''
+"""
+
 
 class PrefsWindow(Gtk.Window):
 
@@ -23,9 +25,9 @@ class PrefsWindow(Gtk.Window):
 
     def __init__(self):
         self._query_days = 7
-        self._query_limit = 20 # Max number of items to query per calendar
-        self._style_calendar_colors = True # Whether to use calendar colors from API
-        self._screen_position = "right" # TODO: Make an enum or reuse some Gtk.halign value
+        self._query_limit = 20  # Max number of items to query per calendar
+        self._style_calendar_colors = True  # Whether to use calendar colors from API
+        self._screen_position = "right"  # TODO: Make an enum or reuse some Gtk.halign value
         self.load_preferences()
 
         Gtk.Window.__init__(self)
@@ -37,10 +39,10 @@ class PrefsWindow(Gtk.Window):
     def set_query_days(self, query_days):
         try:
             val = int(query_days)
-            if val >= 1 and val <= 365:
+            if 1 <= val <= 365:
                 self._query_days = val
         except ValueError:
-            pass # TODO: Notify user of invalid input
+            pass  # TODO: Notify user of invalid input
 
     def get_query_limit(self):
         return self._query_limit
@@ -48,10 +50,10 @@ class PrefsWindow(Gtk.Window):
     def set_query_limit(self, query_limit):
         try:
             val = int(query_limit)
-            if val >= 1 and val <= 50:
+            if 1 <= val <= 50:
                 self._query_limit = val
         except ValueError:
-            pass # TODO: Notify user of invalid input
+            pass  # TODO: Notify user of invalid input
 
     def get_style_calendar_colors(self):
         return self._style_calendar_colors
@@ -88,11 +90,12 @@ class PrefsWindow(Gtk.Window):
         if not os.path.exists(self.PREFS_DIR):
             os.mkdir(self.PREFS_DIR, 0o700)
 
-        prefs = {}
-        prefs[self.PREF_QUERY_DAYS] = self.get_query_days()
-        prefs[self.PREF_QUERY_LIMIT] = self.get_query_limit()
-        prefs[self.PREF_STYLE_CALENDAR_COLORS] = self.get_style_calendar_colors()
-        prefs[self.PREF_SCREEN_POSITION] = self.get_screen_position()
+        prefs = {
+            self.PREF_QUERY_DAYS: self.get_query_days(),
+            self.PREF_QUERY_LIMIT: self.get_query_limit(),
+            self.PREF_STYLE_CALENDAR_COLORS: self.get_style_calendar_colors(),
+            self.PREF_SCREEN_POSITION: self.get_screen_position()
+        }
 
         prefs_file = os.path.join(self.PREFS_DIR, self.PREFS_FILE)
         json.dump(prefs, open(prefs_file, "w"))
