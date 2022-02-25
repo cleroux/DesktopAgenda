@@ -4,7 +4,7 @@ Your calendars overlaid on the desktop.
 Install Dependencies
 --------------------
 ```
-sudo apt install python-pip python-dateutil python-tz python-gi python-appindicator gir1.2-appindicator3-0.1
+sudo apt install python3-pip python3-dateutil python3-tz python3-gi gir1.2-appindicator3-0.1
 pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 ```
 

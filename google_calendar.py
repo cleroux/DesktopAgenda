@@ -44,8 +44,8 @@ class GoogleCalendar:
         self._colors = {}
         try:
             self._colors = self._service.colors().get().execute()
-        except:
-            print "Failed to load calendar colors from Calendar API"
+        except Exception as err:
+            print(f"Failed to load calendar colors from Calendar API: {err}")
 
         self._events = []
 
@@ -63,8 +63,8 @@ class GoogleCalendar:
             # calendars_result = self._service.calendarList().list(minAccessRole="owner").execute()
             calendars_result = self._service.calendarList().list().execute()
             calendars = calendars_result.get("items", [])
-        except:
-            print "Failed to load calendars from Calendar API"
+        except Exception as err:
+            print(f"Failed to load calendars from Calendar API: {err}")
 
         shown_events = []
         for cal in calendars:
@@ -89,8 +89,8 @@ class GoogleCalendar:
                         event["color"] = color
                     event["reminders"] = reminders
                     shown_events.append(event)
-            except:
-                print "Failed to load events from Calendar API"
+            except Exception as err:
+                print(f"Failed to load events from Calendar API: {err}")
 
         shown_events.sort(key=self.get_event_datetime)
         self._events = shown_events
@@ -116,12 +116,12 @@ class GoogleCalendar:
                 cur_date = event_date
                 if date_handler is not None:
                     if not date_handler(event_date):  # Allow handlers to cancel further processing
-                        print "date handler canceled processing"
+                        print("date handler canceled processing")
                         break
 
             if event_handler is not None:
                 if not event_handler(event):  # Allow handlers to cancel further processing
-                    print "event handler canceled processing"
+                    print("event handler canceled processing")
                     break
 
         return self._events

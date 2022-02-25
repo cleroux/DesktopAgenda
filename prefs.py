@@ -72,7 +72,7 @@ class PrefsWindow(Gtk.Window):
     def load_preferences(self):
         prefs_file = os.path.join(self.PREFS_DIR, self.PREFS_FILE)
         if not os.path.exists(prefs_file):
-            print "Creating new prefs file"
+            print("Creating new prefs file")
             self.save_preferences()
             return
 
@@ -84,7 +84,7 @@ class PrefsWindow(Gtk.Window):
         self.set_style_calendar_colors(prefs.get(self.PREF_STYLE_CALENDAR_COLORS, self._style_calendar_colors))
         self.set_screen_position(prefs.get(self.PREF_SCREEN_POSITION, self._screen_position))
 
-        print "Loaded preferences"
+        print("Loaded preferences")
 
     def save_preferences(self):
         if not os.path.exists(self.PREFS_DIR):
@@ -100,4 +100,4 @@ class PrefsWindow(Gtk.Window):
         prefs_file = os.path.join(self.PREFS_DIR, self.PREFS_FILE)
         json.dump(prefs, open(prefs_file, "w"))
 
-        print "Saved preferences"
+        print("Saved preferences")

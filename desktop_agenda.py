@@ -11,7 +11,7 @@ import time
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("AppIndicator3", "0.1")
-from gi.repository import Gtk, Gdk, GObject, AppIndicator3
+from gi.repository import Gtk, Gdk, GLib, AppIndicator3
 
 # TODO: Move these to MainWindow class
 CSS_SOURCE = "style.css"
@@ -41,13 +41,13 @@ class MainWindow(Gtk.Window):
 
         # Create the dropdown menu for the taskbar icon
         menu = Gtk.Menu()
-        item_show_hide = Gtk.MenuItem("Hide")
+        item_show_hide = Gtk.MenuItem(label="Hide")
         item_show_hide.connect("activate", self.show_or_hide)
-        item_refresh = Gtk.MenuItem("Refresh")
+        item_refresh = Gtk.MenuItem(label="Refresh")
         item_refresh.connect("activate", self.refresh_agenda)
-        item_prefs = Gtk.MenuItem("Preferences")
+        item_prefs = Gtk.MenuItem(label="Preferences")
         item_prefs.connect("activate", self.show_prefs)
-        item_quit = Gtk.MenuItem("Quit")
+        item_quit = Gtk.MenuItem(label="Quit")
         item_quit.connect("activate", self.quit)
         menu.append(item_show_hide)
         menu.append(item_refresh)
@@ -116,14 +116,18 @@ class MainWindow(Gtk.Window):
         self.update_agenda(force=True)
 
         # Create timers to update clock and calendar at fixed time intervals
-        GObject.timeout_add(1000, self.update_clock)
-        GObject.timeout_add(1000, self.update_agenda)
-        GObject.timeout_add(1000, self.reminders)
+        GLib.timeout_add(1000, self.update_clock)
+        GLib.timeout_add(1000, self.update_agenda)
+        GLib.timeout_add(1000, self.reminders)
 
     def position(self):
-        screen = self.get_screen()
+        # Right side of displays
+        display = Gdk.Display.get_default()
+        display_width = 0
+        for i in range(display.get_n_monitors()):
+            display_width = display_width + display.get_monitor(i).get_geometry().width
         window_size = self.get_size()
-        self.move(screen.width() - window_size.width, 0)
+        self.move(display_width - window_size.width, 0)
 
     def date_handler(self, date):
         """
@@ -144,7 +148,7 @@ class MainWindow(Gtk.Window):
         # if self.screenMaxReached:
         #     return
 
-        lbl = Gtk.Label(dt.strftime(CLOCK_DATE_FORMAT), xalign=0)
+        lbl = Gtk.Label(label=dt.strftime(CLOCK_DATE_FORMAT), xalign=0)
         lbl.get_style_context().add_class("lbl")
         lbl.get_style_context().add_class("date-header-lbl")
         self.event_container.attach(lbl, 0, self.row, 2, 1)
@@ -193,22 +197,22 @@ class MainWindow(Gtk.Window):
         time_lbl = Gtk.Label(xalign=0)
         time_lbl.set_halign(Gtk.Align.END)
         lbl_color = event.get("color", None)
-        # print lbl_color
+        # print(lbl_color)
         if lbl_color is not None:
             time_lbl.set_markup("<span foreground='{}'>{}</span>".format(event["color"], ev_time))
         time_lbl.get_style_context().add_class("lbl")
         time_lbl.get_style_context().add_class("event-time-lbl")
         self.event_container.attach(time_lbl, 0, self.row, 1, 1)
 
-        title_lbl = Gtk.Label(title, xalign=0)
+        title_lbl = Gtk.Label(label=title, xalign=0)
         title = title.replace("&", "&amp;")
         if lbl_color is not None:
-            title_lbl.set_markup("<span foreground='{}'>{}</span>".format(event["color"], title.encode("utf-8")))
+            title_lbl.set_markup("<span foreground='{}'>{}</span>".format(event["color"], title))
 
         # Set tooltip
-        tooltip_text = "Location: {}".format(location.encode("utf-8"))
+        tooltip_text = "Location: {}".format(location)
         if organizer is not None:
-            tooltip_text = "{}\nOrganizer: {}".format(tooltip_text, organizer.encode("utf-8"))
+            tooltip_text = "{}\nOrganizer: {}".format(tooltip_text, organizer)
         title_lbl.set_tooltip_text(tooltip_text)
 
         # Set label style
@@ -257,7 +261,7 @@ class MainWindow(Gtk.Window):
             reminder_time = dt - timedelta(minutes=minutes)
             if reminder_time == now:
                 # TODO: Create popup notification
-                print "popup"
+                #print "popup"
                 return False  # Only create one popup and cancel further event handlers
         return True
 
